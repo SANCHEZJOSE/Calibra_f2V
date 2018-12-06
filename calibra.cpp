@@ -44,15 +44,15 @@ int main(int argc,char * argv[])
     float min_rec = 0;
     float tbase=0;
     while (min_rec<minutos_Muestro) {
-		dt=recolecta_Data_f2V(adc24b,datos);
 		cout << "Por favor, ingrese frecuencia (en Hz) ";
 //		getline(cin,freq_in);
 		cin >> freq_in;
-		if (freq_in<0)
+	    	if (freq_in<0)
 		  {
 		    printf ("Mediciones terminadas\n");
 		    exit (EXIT_FAILURE);
 		  }
+	    	dt=recolecta_Data_f2V(adc24b,datos);
 		tbase=save_data_freq(datos,freq_in,dt,tbase,argv[1]);
 //		printf("Datos temporales guardados\n");
 		min_rec+=save_min;
@@ -69,11 +69,10 @@ return (0);
 float recolecta_Data_f2V(ADS1256 & ads24,float ** data)
 {
 	// programa que recolecta datos de dV para 5 canales
-    int i=0;
+	int i=0;
 	muestras_anteriores=0;
 	ads24.setChannel(0,1);
 	clock_gettime( CLOCK_REALTIME, &ts1 );
-
 	while(i < filas){
 		ads24.waitDRDY(); 
 		ads24.setChannel(2,3);
@@ -84,56 +83,55 @@ float recolecta_Data_f2V(ADS1256 & ads24,float ** data)
 		ads24.waitDRDY();
 		ads24.setChannel(0,1); 
 		data[i][2]=ads24.readChannel();  // Salida de los pines AIN4 y AIN5
-				if(i-muestras_anteriores>=sps/blink){
-		muestras_anteriores=i;
+		if(i-muestras_anteriores>=sps/blink){
+			muestras_anteriores=i;
 			if(estado==false){
-				estado=true;}
-				else{
-				estado=false;}
-				}
+				estado=true;
+			}
+			else{
+				estado=false;
+			}
+		}
 		if(estado){ bcm2835_gpio_write(12,HIGH);}
 		else{ bcm2835_gpio_write(12,LOW);}
-	    i++;
-		}
-		clock_gettime( CLOCK_REALTIME, &ts2 );
-		tiempo=(float) ((1.0*ts2.tv_nsec - ts1.tv_nsec*1.0)*1e-9 +1.0*ts2.tv_sec - 1.0*ts1.tv_sec )*1000.0;
-	    return(tiempo/(float)filas);
+	    	i++;
+	}
+	clock_gettime( CLOCK_REALTIME, &ts2 );
+	tiempo=(float) ((1.0*ts2.tv_nsec - ts1.tv_nsec*1.0)*1e-9 +1.0*ts2.tv_sec - 1.0*ts1.tv_sec )*1000.0;
+	return(tiempo/(float)filas);
 }
+
 float save_data_freq(float **matriz,float freq_in,float delta,float t_0,char * name){
-int aux;
-FILE * archivo=fopen(name,"a+");
-for (int j = 0; j <columnas; j++){
+	int aux;
+	FILE * archivo=fopen(name,"a+");
+	for (int j = 0; j <columnas; j++){
 		fprintf(archivo,"%2d\t",j+1); // colomna, ed, canal
 		fprintf(archivo,"%.9f\t",freq_in);     // frecuencia
 		for (int i = 0; i < filas; i++){
 			fprintf(archivo,"%.9f\t",matriz[i][j]);
-		aux=i;
+			aux=i;
 		}
-
 		fprintf(archivo,"\n");
         }
-
-
 	fclose(archivo);
 	return delta*aux+t_0;
-	}
+}
+
 void setup(){
-	    INIReader reader("config.ini");
-
-    if (reader.ParseError() < 0) {
-        printf( "Error! el archivo de config no se encuentra.\n Variables iniciadas con valores por defecto\n");
-
-    }
-    else{ minutos_Muestro = (float)reader.GetReal("configuraciones", "minutos",20.0);
-           printf("TIEMPO DE MUESTREO : %f MINUTOS\n", minutos_Muestro );
-           save_min = (float)reader.GetReal("configuraciones", "save",0.5);
-           printf("TIEMPO PARA GUARDAR : %f MINUTOS\n", save_min );
-           sps = reader.GetInteger("configuraciones", "sps",150);
-           printf("MUESTRAS POR SEGUNDO %d SPS\n", sps );
-           clock_divisor = reader.GetInteger("configuraciones","clock_divisor",256);
-           printf("DIVISOR DEL RELOJ(BCM2835) : %d \n", clock_divisor );
-           blink = reader.GetInteger("configuraciones","blink",1);
-           printf("DIVISOR DE PARPADEO LED : %d \n", blink );
-           printf("Variables configuradas segun 'configuraciones.ini'\n");
+	INIReader reader("config.ini");
+	if (reader.ParseError() < 0) {
+        	printf( "Error! el archivo de config no se encuentra.\n Variables iniciadas con valores por defecto\n");
+	}
+	else{ minutos_Muestro = (float)reader.GetReal("configuraciones", "minutos",20.0);
+	     	printf("TIEMPO DE MUESTREO : %f MINUTOS\n", minutos_Muestro );
+	     	save_min = (float)reader.GetReal("configuraciones", "save",0.5);
+           	printf("TIEMPO PARA GUARDAR : %f MINUTOS\n", save_min );
+           	sps = reader.GetInteger("configuraciones", "sps",150);
+           	printf("MUESTRAS POR SEGUNDO %d SPS\n", sps );
+           	clock_divisor = reader.GetInteger("configuraciones","clock_divisor",256);
+           	printf("DIVISOR DEL RELOJ(BCM2835) : %d \n", clock_divisor );
+           	blink = reader.GetInteger("configuraciones","blink",1);
+           	printf("DIVISOR DE PARPADEO LED : %d \n", blink );
+           	printf("Variables configuradas segun 'configuraciones.ini'\n");
            }
 	}
